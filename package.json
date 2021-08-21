@@ -1,0 +1,9 @@
+{
+  "name": "Mirai-API",
+  "version": "0.0.1",
+  "main": "index.js",
+  "repository": "https://github.com/YuzuZensai/Mirai-API.git",
+  "author": "YuzuZensai <contact@kirameki.pink>",
+  "license": "MIT",
+  "private": true
+}
