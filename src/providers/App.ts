@@ -2,8 +2,7 @@ import Logger from '../libs/Logger';
 
 import Environment from './Environment';
 import Express from './Express';
-// TODO: Implement GoogleAPIs
-//import GoogleAPI from './GoogleAPI';
+import GoogleAPI from './GoogleAPI';
 import Prisma from './Prisma';
 
 class App {
@@ -28,11 +27,10 @@ class App {
         Prisma.init();
     }
 
-    // TODO: Implement GoogleAPIs
-    /*public loadGoogleAPI(): void {
+    public loadGoogleAPI(): void {
         Logger.log('info', 'Loading GoogleAPI');
         GoogleAPI.init();
-    }*/
+    }
 
 }
 

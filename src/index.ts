@@ -6,7 +6,6 @@ NativeException.process();
 App.loadENV();
 App.loadExpress();
 App.loadPrisma();
-// TODO: Implement GoogleAPIs
-//App.loadGoogleAPI();
+App.loadGoogleAPI();
 
 export default App;
