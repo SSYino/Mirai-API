@@ -6,6 +6,12 @@
   "author": "YuzuZensai <contact@kirameki.pink>",
   "license": "MIT",
   "private": true,
+  "scripts": {
+    "tsc": "tsc",
+    "development": "ts-node-dev ./src/index.ts --respawn --transpileOnly",
+    "production": "tsc && node ./build/index.js",
+    "test": "mocha -r ts-node/register tests/**/*.ts"
+  },
   "dependencies": {
     "chai": "^4.3.4",
     "chai-http": "^4.3.0",
