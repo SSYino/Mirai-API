@@ -10,6 +10,7 @@ model Users {
   id                 String         @id
   given_name         String   
   family_name        String
+  email              String
   picture_url        String
   sessions           Sessions[]
   isAdmin            Boolean        @default(false)
