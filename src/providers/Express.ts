@@ -23,9 +23,8 @@ class Express {
     public init(): void {
 
         this.mountMiddlewares();
-
 		this.mountRoutes();
-        this.express.use(ExpressException.errorLogger);
+        this.express = this.express.use(ExpressException.errorLogger);
 
         this.server = this.express.listen(Environment.get().WEB_PORT, Environment.get().WEB_HOST, () => {
             Logger.log('info', `Express Webserver listening at ${Environment.get().WEB_HOST}:${Environment.get().WEB_PORT}`);
