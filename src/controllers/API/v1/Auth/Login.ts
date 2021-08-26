@@ -15,8 +15,7 @@ class Login {
             
             else {
                 return res.status(200).json({
-                    success: true,
-                    url: Users.generateAuthenticateURL()
+                    redirect_url: Users.generateAuthenticateURL()
                 });
             }
 
