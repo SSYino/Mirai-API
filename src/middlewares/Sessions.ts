@@ -7,28 +7,16 @@ class Sessions {
         return _express;
     }
 
-    public static async isAuthenticated(req: any, res: any, next: any) {
+    public static isAuthenticated(req: any, res: any, next: any) {
+        Promise.resolve().then(async () => {
+            let reqToken = SessionService.extractTokenHeader(req);
+            req.token = reqToken;
 
-        let reqToken = SessionService.extractTokenHeader(req);
-        
-        if(!reqToken.success)
-            return res.status(400).json({
-                success: false,
-                error: reqToken.error
-            });
-        
-        req.token = reqToken.token;
-
-        let result = await SessionService.validateToken(reqToken.token);
-        
-        if(result.valid)
-            return next();
-        
-        return res.status(401).json({
-            success: false,
-            error: result.error,
-        });
-        
+            let result = await SessionService.validateToken(reqToken);
+            
+            if(result)
+                return next();
+        }).catch(next);
     }
 
 }
