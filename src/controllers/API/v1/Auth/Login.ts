@@ -19,7 +19,7 @@ class Login {
                 });
             }
 
-        }).catch(next)
+        }).catch(next);
     }
 }
 
