@@ -107,7 +107,6 @@ class Users {
         const issuedToken = await Sessions.issueToken(profile.data.id, token.tokens.access_token, token.tokens.refresh_token, token.tokens.expiry_date);
             
         return {
-            success: true,
             token: issuedToken,
             profile: {
                 family_name: profile.data.family_name,
