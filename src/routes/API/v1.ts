@@ -6,7 +6,7 @@ import Login from '../../controllers/API/v1/Auth/Login';
 import RateLimit from '../../middlewares/RateLimit';
 
 import Sessions from '../../middlewares/Sessions';
-import Me from '../../controllers/API/v1/Users/Me';
+import Profile from '../../controllers/API/v1/Users/Profile';
 //import Courses from '../../controllers/API/v1/Classrooms/Courses';
 //import CourseWorks from '../../controllers/API/v1/Classrooms/CourseWorks';
 //import AdminUsers from '../../controllers/API/v1/Admin/Users';
@@ -27,7 +27,7 @@ let isDevEnv = (req: any, res: any, next: any) => {
 
 router.get('/auth/login', RateLimit.defaultAPI, Login.perform);
 
-router.get('/users/me', RateLimit.defaultAPI, Sessions.isAuthenticated, Me.perform);
+router.get('/users/:id/profile', RateLimit.defaultAPI, Sessions.isAuthenticated, Profile.perform);
 
 //router.get('/admin/users', RateLimit.defaultAPI, Sessions.isAuthenticated, Users.isAdmin, AdminUsers.perform);
 
