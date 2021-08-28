@@ -3,58 +3,37 @@ import RequestHelper from "../../../../libs/RequestHelper";
 import Logger from "../../../../libs/Logger";
 
 import Sessions from "../../../../services/Sessions";
-import Users from "../../../../services/Users";
+import UserService from "../../../../services/Users";
+import HTTP_STATUS from "../../../../libs/HTTPStatus";
 
-class Me {
-    public static async perform(req: any, res: any) {
-
-        let reqToken = Sessions.extractTokenHeader(req);
-
-        if(!reqToken.success)
-            return res.status(400).json({
-                success: false,
-                error: Sessions.extractTokenHeader(req).error
-            });     
-
-        let sessionOwner = await Sessions.getTokenOwner(reqToken.token);
-
-        if(!sessionOwner.success)
-            return res.status(400).json({
-                success: false,
-                error: sessionOwner.error
-            });
-
-        if(typeof sessionOwner.id == "undefined")
-            throw new Error("Unable to lookup users, session owner object is null");
-
-        let User = await Users.getAllUser();
-
-        if(!User.success)
-            return res.status(400).json({
-                success: false,
-                error: User.error
-            });
-
-        if(typeof User.data == "undefined")
-            throw new Error("Unable to lookup users, user object is null");
+class Users {
+    public static async perform(req: any, res: any, next: any) {
+        Promise.resolve().then(async () => {
+        //let reqToken = Sessions.extractTokenHeader(req);
+        //let sessionOwner = await Sessions.getTokenOwner(reqToken.token);
+        
+        let AllUsers = await UserService.getAllUser();
 
         let userData = [];
-        for(let user of User.data) {
+        for(let user of AllUsers) {
             userData.push({
-                id: user.id,
-                given_name: user.given_name,
-                family_name: user.family_name,
-                picture_url: user.picture_url,
+                profile: {
+                    family_name: user.family_name,
+                    given_name: user.given_name,
+                    id: user.id,
+                    picture_url: user.picture_url,
+                    email: user.email
+                },
                 isAdmin: user.isAdmin,
-                isDeveloper: user.isDeveloper
+                isDeveloper: user.isDeveloper,
+                isTeacher: user.isTeacher,
+                isStudent: user.isStudent
             });
         }
             
-        return res.status(200).json({
-            success: true,
-            data: userData
-        });
+        return res.status(HTTP_STATUS.OK).json(userData);
+        }).catch(next);
     }
 }
 
-export default Me;
+export default Users;

@@ -2,6 +2,8 @@ import Express from "express";
 
 import UserService from "../services/Users";
 import SessionService from "../services/Sessions";
+import { ServiceError } from "../exception/Errors";
+import HTTP_STATUS from "../libs/HTTPStatus";
 
 class Users {
     public static init(_express: any): Express.Application {
@@ -9,35 +11,17 @@ class Users {
     }
 
     public static async isAdmin(req: any, res: any, next: any) {
-
+        Promise.resolve().then(async () => {
         let reqToken = SessionService.extractTokenHeader(req);
-        let sessionOwner = await SessionService.getTokenOwner(reqToken.token);
-
-        if(!sessionOwner.success)
-            return res.status(400).json({
-                success: false,
-                error: sessionOwner.error
-            });
-
-        if(typeof sessionOwner.id == "undefined")
-            throw new Error("Unable to lookup users, session owner object is null");
-
-        let result = await UserService.isAdmin(sessionOwner.id);
+        let sessionOwner = await SessionService.getTokenOwner(reqToken);
+      
+        let result = await UserService.isAdmin(sessionOwner);
         
-        if(result.result)
+        if(result)
             return next();
-        if(!result.result && !result.error) {
-            return res.status(403).json({
-                success: false,
-                error: "You have insufficient privileges to perform this operation",
-            });
-        }
-        
-        return res.status(401).json({
-            success: false,
-            error: result.error,
-        });
-        
+       
+        throw new ServiceError(HTTP_STATUS.FORBIDDEN, "You have insufficient privileges to perform this operation");
+        }).catch(next);
     }
 
 }

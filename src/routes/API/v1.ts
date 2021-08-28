@@ -9,7 +9,7 @@ import Sessions from '../../middlewares/Sessions';
 import Profile from '../../controllers/API/v1/Users/Profile';
 //import Courses from '../../controllers/API/v1/Classrooms/Courses';
 //import CourseWorks from '../../controllers/API/v1/Classrooms/CourseWorks';
-//import AdminUsers from '../../controllers/API/v1/Admin/Users';
+import AdminUsers from '../../controllers/API/v1/Admin/Users';
 import Users from '../../middlewares/Users';
 
 
@@ -29,7 +29,7 @@ router.get('/auth/login', RateLimit.defaultAPI, Login.perform);
 
 router.get('/users/:id/profile', RateLimit.defaultAPI, Sessions.isAuthenticated, Profile.perform);
 
-//router.get('/admin/users', RateLimit.defaultAPI, Sessions.isAuthenticated, Users.isAdmin, AdminUsers.perform);
+router.get('/admin/users', RateLimit.defaultAPI, Sessions.isAuthenticated, Users.isAdmin, AdminUsers.perform);
 
 //router.get('/classrooms/courses', RateLimit.defaultAPI, Sessions.isAuthenticated, Courses.perform);
 //router.get('/classrooms/courseworks', RateLimit.defaultAPI, Sessions.isAuthenticated, CourseWorks.perform);
