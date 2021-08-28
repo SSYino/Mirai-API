@@ -105,6 +105,7 @@ class Users {
         }
 
         const issuedToken = await Sessions.issueToken(profile.data.id, token.tokens.access_token, token.tokens.refresh_token, token.tokens.expiry_date);
+        const user = await this.getUser(profile.data.id);
             
         return {
             token: issuedToken,
@@ -116,7 +117,11 @@ class Users {
                 name: profile.data.name,
                 picture: profile.data.picture,
                 emailAddress: gmail.data.emailAddress
-            }
+            },
+            isAdmin: user.isAdmin,
+            isDeveloper: user.isDeveloper,
+            isTeacher: user.isTeacher,
+            isStudent: user.isStudent
         }
     }
 
