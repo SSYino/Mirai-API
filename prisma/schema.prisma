@@ -15,6 +15,8 @@ model Users {
   sessions           Sessions[]
   isAdmin            Boolean        @default(false)
   isDeveloper        Boolean        @default(false)
+  isTeacher          Boolean        @default(false)
+  isStudent          Boolean        @default(true)
   createdAt          DateTime       @default(now()) @db.Timestamptz()
   updatedAt          DateTime       @updatedAt @db.Timestamptz()
 }
