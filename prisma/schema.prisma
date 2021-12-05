@@ -6,31 +6,56 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Users { 
-  id                 String         @id
-  given_name         String   
-  family_name        String
-  email              String
-  picture_url        String
-  sessions           Sessions[]
-  isAdmin            Boolean        @default(false)
-  isDeveloper        Boolean        @default(false)
-  isTeacher          Boolean        @default(false)
-  isStudent          Boolean        @default(true)
-  createdAt          DateTime       @default(now()) @db.Timestamptz()
-  updatedAt          DateTime       @updatedAt @db.Timestamptz()
+model Users {
+  id          String     @id
+  given_name  String
+  family_name String
+  email       String
+  picture_url String
+  sessions    Sessions[]
+  classes     Json?
+  isAdmin     Boolean    @default(false)
+  isDeveloper Boolean    @default(false)
+  isTeacher   Boolean    @default(false)
+  isStudent   Boolean    @default(true)
+  isSuspended Boolean    @default(false)
+  createdAt   DateTime   @default(now()) @db.Timestamptz
+  updatedAt   DateTime   @updatedAt @db.Timestamptz
+  classesId   String?
 }
 
 model Sessions {
-  token             String         @id @db.VarChar(100)
+  token             String   @id @db.VarChar(100)
   access_token      String
   refresh_token     String
-  expiry_date_token DateTime       @db.Timestamptz()
-  owner             Users          @relation(fields: [userId], references: [id])
+  expiry_date_token DateTime @db.Timestamptz
+  owner             Users    @relation(fields: [userId], references: [id])
   userId            String
-  revoked           Boolean        @default(false)
-  createdAt         DateTime       @default(now()) @db.Timestamptz()
+  revoked           Boolean  @default(false)
+  createdAt         DateTime @default(now()) @db.Timestamptz
 }
+
+model Classes {
+  id                 String   @id
+  name               String
+  section            String?
+  descriptionHeading String?
+  description        String?
+  room               String?
+  ownerId            String
+  creationTime       DateTime @db.Timestamptz
+  updateTime         DateTime @db.Timestamptz
+  courseState        String
+  alternateLink      String
+  teacherGroupEmail  String
+  courseGroupEmail   String
+  guardiansEnabled   Boolean
+  calendarId         String?
+  createdAt          DateTime @default(now()) @db.Timestamptz
+  updatedAt          DateTime @updatedAt @db.Timestamptz
+  usersId            String?
+}
+
 
 generator client {
   provider = "prisma-client-js"
