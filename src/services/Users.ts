@@ -104,6 +104,10 @@ class Users {
             // TODO: Check if user data was changed and update it on the database.
         }
 
+        if(await this.isSuspended(profile.data.id)) {
+            throw new ServiceError(HTTP_STATUS.FORBIDDEN, 'Your account is currently suspended'); 
+        }
+
         const issuedToken = await Sessions.issueToken(profile.data.id, token.tokens.access_token, token.tokens.refresh_token, token.tokens.expiry_date);
         const user = await this.getUser(profile.data.id);
             
@@ -121,7 +125,8 @@ class Users {
             isAdmin: user.isAdmin,
             isDeveloper: user.isDeveloper,
             isTeacher: user.isTeacher,
-            isStudent: user.isStudent
+            isStudent: user.isStudent,
+            isSuspended: user.isSuspended
         }
     }
 
@@ -141,9 +146,81 @@ class Users {
         return result;
     }
 
-    public static async getAllUser() {
-        const result = await Prisma.client.users.findMany();
+    public static async getAllUser({ search, page, perPage, role, status }: any) {
+
+        let options = {
+        };
+
+        if(page && perPage) {
+            if(perPage != -1) {
+                (options as any).skip = (parseInt(page) - 1) * parseInt(perPage);
+                (options as any).take = parseInt(perPage);
+            }
+        }
+
+        if(role) {
+            let merge;
+            
+            if(role === "admin")
+                merge = { isAdmin: true };
+            else if(role === "student")
+                merge = { isStudent: true };
+            else if(role === "teacher")
+                merge = { isTeacher: true };
+            else if(role === "developer")
+                merge = { isDeveloper: true };
+
+            if(merge)
+                (options as any).where = {...(options as any).where, ...merge};
+        }
+
+        if(search) {
+            const merge = {
+                OR: [
+                    {
+                        id: {
+                            contains: search,
+                            mode: 'insensitive'
+                        }
+                    },
+                    {
+                        given_name: {
+                            contains: search,
+                            mode: 'insensitive'
+                        }
+                    },
+                    {
+                        family_name: {
+                            contains: search,
+                            mode: 'insensitive'
+                        }
+                    },
+                    {
+                        email: {
+                            contains: search,
+                            mode: 'insensitive'
+                        }
+                    },
+                ]
+            };
+            (options as any).where = {...(options as any).where, ...merge};
+        }
+
+        if(status) {
+            let merge;
+            
+            if(status === "active")
+                merge = { isSuspended: false };
+            else if(status === "suspended")
+                merge = { isSuspended: true };
+
+            if(merge)
+                (options as any).where = {...(options as any).where, ...merge};
+        }
+
+        const result = await Prisma.client.users.findMany(options);
         return result;
+
     }
 
     public static async exists(id: string) {
@@ -184,6 +261,17 @@ class Users {
         let user = await this.getUser(id);
 
         return user.isAdmin;
+    }
+
+    
+    public static async isSuspended(id: string) {
+
+        if(!this.isGoogleIdValid(id))
+            throw new ServiceError(HTTP_STATUS.BAD_REQUEST, 'Invalid GoogleID');
+
+        let user = await this.getUser(id);
+
+        return user.isSuspended;
     }
     
 }
