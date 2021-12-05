@@ -14,7 +14,7 @@ class Profile {
             ///let sessionOwner = await Sessions.getTokenOwner(reqToken);
 
             if(!Users.isGoogleIdValid(req.params.id))
-                throw new ServiceError(HTTP_STATUS.BAD_REQUEST, "Invalid GoogleID")
+                throw new ServiceError(HTTP_STATUS.BAD_REQUEST, "Invalid GoogleID");
 
             let User = await Users.getUser(req.params.id);
 
