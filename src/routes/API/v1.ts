@@ -7,9 +7,11 @@ import RateLimit from '../../middlewares/RateLimit';
 
 import Sessions from '../../middlewares/Sessions';
 import Profile from '../../controllers/API/v1/Users/Profile';
-//import Courses from '../../controllers/API/v1/Classrooms/Courses';
+import Classes from '../../controllers/API/v1/Classroom/Classes';
+import Assignments from '../../controllers/API/v1/Classroom/Assignments';
 //import CourseWorks from '../../controllers/API/v1/Classrooms/CourseWorks';
 import AdminUsers from '../../controllers/API/v1/Admin/Users';
+import AdminSessions from '../../controllers/API/v1/Admin/Sessions';
 import Users from '../../middlewares/Users';
 
 
@@ -30,8 +32,11 @@ router.get('/auth/login', RateLimit.defaultAPI, Login.perform);
 router.get('/users/:id/profile', RateLimit.defaultAPI, Sessions.isAuthenticated, Profile.perform);
 
 router.get('/admin/users', RateLimit.defaultAPI, Sessions.isAuthenticated, Users.isAdmin, AdminUsers.perform);
+router.get('/admin/sessions', RateLimit.defaultAPI, Sessions.isAuthenticated, Users.isAdmin, AdminSessions.perform);
 
-//router.get('/classrooms/courses', RateLimit.defaultAPI, Sessions.isAuthenticated, Courses.perform);
+router.get('/classroom/classes', RateLimit.defaultAPI, Sessions.isAuthenticated, Classes.perform);
+router.get('/classroom/assignments', RateLimit.defaultAPI, Sessions.isAuthenticated, Assignments.perform);
+
 //router.get('/classrooms/courseworks', RateLimit.defaultAPI, Sessions.isAuthenticated, CourseWorks.perform);
 
 
