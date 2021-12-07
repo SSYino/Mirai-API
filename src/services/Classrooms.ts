@@ -68,7 +68,7 @@ class Classrooms {
             return courses;
         }
 
-        if(cached) {
+        if(!cached) {
             return await fetchUncached();
         }
         else {
@@ -105,21 +105,27 @@ class Classrooms {
     public static async getAssignments(token: string, status: string, cached: boolean){
 
         let sessions = await Sessions.getGoogleToken(token);
+        let sessionOwner = await Sessions.getTokenOwner(token);
+
+        const credentials = GoogleAPI.getConfig();
+    
+        const oAuth2Client = new GoogleAPI.google.auth.OAuth2(
+            credentials.web.client_id,
+            credentials.web.client_secret,
+            credentials.web.redirect_uris[0]
+        );
+
+        await oAuth2Client.setCredentials({
+            access_token: sessions.access_token,
+            refresh_token: sessions.refresh_token,
+        });   
+
+        const fetchCached = async () => {
+
+        }
 
         const fetchUncached = async () => {
-            const credentials = GoogleAPI.getConfig();
-    
-            const oAuth2Client = new GoogleAPI.google.auth.OAuth2(
-                credentials.web.client_id,
-                credentials.web.client_secret,
-                credentials.web.redirect_uris[0]
-            );
-    
-            await oAuth2Client.setCredentials({
-                access_token: sessions.access_token,
-                refresh_token: sessions.refresh_token,
-            });
-    
+        
             const classroom = GoogleAPI.google.classroom({
                 version: "v1",
                 auth: oAuth2Client,
@@ -129,11 +135,12 @@ class Classrooms {
 
             let data: any = [];
             let requests = [];
+
             for(let _class of classes) {
                 requests.push(new Promise (async (resolve, reject) => {
                     try {
                         const courses_assigments = await classroom.courses.courseWork.list({
-                            fields: 'courseWork(id,title)',
+                            //fields: 'courseWork(id,title)',
                             courseId: _class.id,
                         });
 
@@ -152,9 +159,10 @@ class Classrooms {
                             courseId: _class.id,
                             courseWorkId: '-',
                             userId: 'me',
-                            states: ['NEW', 'CREATED']
+                            //states: ['NEW', 'CREATED']
                             //courseWorkStates: status
                         });
+
                         if(res.data.studentSubmissions) {
                             for(let cw of res.data.studentSubmissions) {
                                 cw.title = idToData[cw.courseWorkId].title;
@@ -171,13 +179,100 @@ class Classrooms {
             }
 
             await Promise.all(requests)
+            let sorted = data.sort((a: any, b: any) => (a.courseWorkId > b.courseWorkId) ? 1 : ((b.courseWorkId > a.courseWorkId) ? -1 : 0));
 
-            return data;
+            let db_data = [];
+            
+            for(let db_e of sorted) {
+                db_data.push({
+                    id: db_e.id,
+                    courseId: db_e.courseId,
+                    courseWorkId: db_e.courseWorkId,
+                    creationTime: db_e.creationTime,
+                    updateTime: db_e.updateTime,
+                    state: db_e.state,
+                    alternateLink: db_e.alternateLink,
+                    courseWorkType: db_e.courseWorkType,
+                    title: db_e.title
+                });
+            }
+
+            await PrismaProvider.client.assignments.createMany({
+                data: db_data,
+                skipDuplicates: true
+            });
+
+            (async () => {
+                let all_id = [];
+                for(let c of db_data) {
+                    await PrismaProvider.client.assignments.update({
+                        where: { id: c.id },
+                        data: c
+                    });
+                    all_id.push(c.id);
+                }
+
+                await PrismaProvider.client.users.update({
+                    where: {
+                        id: sessions.owner
+                    },
+                    data: {
+                        assignments: (all_id as Prisma.JsonArray)
+                    }
+                });
+
+            })();
+
+            return sorted;
           
         }
 
-        return await fetchUncached();
-        
+        if(!cached) {
+            try {
+                let data = await fetchUncached();
+                return data;
+            } catch(err: any) {
+                if(err.message === "Invalid Credentials") {
+                    let renew = await Sessions.refreshAccessToken(sessionOwner, sessions.access_token, sessions.refresh_token);
+                    await oAuth2Client.setCredentials({
+                        access_token: renew.access_token,
+                        refresh_token: renew.refresh_token,
+                    });  
+                    return await fetchUncached();
+                }
+                else
+                    throw err;
+            }
+        }
+        else {
+            let user = await Users.getUser(sessions.owner);
+
+            if((user.assignments as string[]) == null)
+                return await fetchUncached();
+
+            let assignments = await PrismaProvider.client.assignments.findMany({
+                where: {
+                    id: {
+                        in: (user.assignments as string[])
+                    }
+                }
+            });
+            
+            /*let sorted: any = [];
+            for(const id of (user.assignments as string[])) {
+
+                const result = courses.filter(obj => {
+                    return obj.id === id
+                });
+                  
+                if(result[0])
+                    sorted.push(result[0]);
+            }*/
+
+            let sorted = assignments.sort((a: any, b: any) => (a.courseWorkId > b.courseWorkId) ? 1 : ((b.courseWorkId > a.courseWorkId) ? -1 : 0));
+
+            return sorted;
+        }
         
     }
 
