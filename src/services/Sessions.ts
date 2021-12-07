@@ -4,6 +4,8 @@ import Prisma from "../providers/Prisma";
 import Crypto from "crypto";
 import Validator from "validator";
 
+import GoogleAPI from "../providers/GoogleAPI";
+
 import { DatabaseError, ServiceError } from "../exception/Errors"
 import Users from "./Users";
 import HTTP_STATUS from "../libs/HTTPStatus";
@@ -68,6 +70,53 @@ class Sessions {
 
         return token;
     }
+
+    public static async refreshAccessToken(id: any, access_token: any, refresh_token: any) {
+
+        //const User = await Users.getUser(id);
+
+        //let expireDate = new Date();
+        //expireDate.setSeconds(expireDate.getSeconds() + parseInt(Environment.get().SESSION_TOKEN_VALID_LENGTH));
+
+        const credentials = GoogleAPI.getConfig();
+    
+        const oAuth2Client = new GoogleAPI.google.auth.OAuth2(
+            credentials.web.client_id,
+            credentials.web.client_secret,
+            credentials.web.redirect_uris[0]
+        );
+
+        await oAuth2Client.setCredentials({
+            access_token: access_token,
+            refresh_token: refresh_token,
+        });   
+
+        let newSessions = (await oAuth2Client.refreshAccessToken()).credentials;
+
+
+        const result = await Prisma.client.sessions.updateMany({
+            where: {
+                userId: id,
+                access_token: access_token,
+                refresh_token: refresh_token
+            },
+            data: {
+                access_token: newSessions.access_token,
+                refresh_token: newSessions.refresh_token,
+                expiry_date_token: new Date(newSessions.expiry_date),
+            },
+        });
+
+        if (result == null)
+            throw new DatabaseError("Unable to save new token, create object is null");
+
+        return {
+            access_token: newSessions.access_token,
+            refresh_token: newSessions.refresh_token
+        };
+    }
+
+
 
     public static async validateToken(token: string) {
 
