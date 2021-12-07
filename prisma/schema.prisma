@@ -14,6 +14,7 @@ model Users {
   picture_url String
   sessions    Sessions[]
   classes     Json?
+  assignments Json?
   isAdmin     Boolean    @default(false)
   isDeveloper Boolean    @default(false)
   isTeacher   Boolean    @default(false)
@@ -54,6 +55,18 @@ model Classes {
   createdAt          DateTime @default(now()) @db.Timestamptz
   updatedAt          DateTime @updatedAt @db.Timestamptz
   usersId            String?
+}
+
+model Assignments {
+  id                 String   @id
+  courseId           String
+  courseWorkId       String
+  creationTime       DateTime @db.Timestamptz
+  updateTime         DateTime @db.Timestamptz
+  state              String
+  alternateLink      String
+  courseWorkType     String
+  title              String
 }
 
 
