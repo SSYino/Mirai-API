@@ -7,22 +7,25 @@ datasource db {
 }
 
 model Users {
-  id          String     @id
-  given_name  String
-  family_name String
-  email       String
-  picture_url String
-  sessions    Sessions[]
-  classes     Json?
-  assignments Json?
-  isAdmin     Boolean    @default(false)
-  isDeveloper Boolean    @default(false)
-  isTeacher   Boolean    @default(false)
-  isStudent   Boolean    @default(true)
-  isSuspended Boolean    @default(false)
-  createdAt   DateTime   @default(now()) @db.Timestamptz
-  updatedAt   DateTime   @updatedAt @db.Timestamptz
-  classesId   String?
+  id           String         @id
+  given_name   String
+  family_name  String
+  email        String
+  picture_url  String
+  sessions     Sessions[]
+  classes      Json?
+  assignments  Json?
+  calendar     Calendar?
+  isAdmin      Boolean        @default(false)
+  isDeveloper  Boolean        @default(false)
+  isTeacher    Boolean        @default(false)
+  isStudent    Boolean        @default(true)
+  isSuspended  Boolean        @default(false)
+  createdAt    DateTime       @default(now()) @db.Timestamptz
+  updatedAt    DateTime       @updatedAt @db.Timestamptz
+  classesId    String?
+  calendarId   Int?
+  CalendarData CalendarData[]
 }
 
 model Sessions {
@@ -58,17 +61,49 @@ model Classes {
 }
 
 model Assignments {
-  id                 String   @id
-  courseId           String
-  courseWorkId       String
-  creationTime       DateTime @db.Timestamptz
-  updateTime         DateTime @db.Timestamptz
-  state              String
-  alternateLink      String
-  courseWorkType     String
-  title              String
+  id             String   @id
+  courseId       String
+  courseWorkId   String
+  creationTime   DateTime @db.Timestamptz
+  updateTime     DateTime @db.Timestamptz
+  state          String
+  alternateLink  String
+  courseWorkType String
+  title          String
 }
 
+model Calendar {
+  id            Int            @id @default(autoincrement())
+  owner         Users          @relation(fields: [userId], references: [id])
+  userId        String         @unique
+  nextPageToken String?
+  items         Json
+  CalendarData  CalendarData[]
+}
+
+model CalendarData {
+  id                             String   @id
+  calendar                       Calendar @relation(fields: [calendarId], references: [id])
+  calendarId                     Int
+  User                           Users    @relation(fields: [userId], references: [id])
+  userId                         String
+  kind                           String?
+  etag                           String?
+  summary                        String?
+  description                    String?
+  primary                        Boolean?
+  timeZone                       String?
+  colorId                        String?
+  backgroundColor                String?
+  foregroundColor                String?
+  selected                       Boolean?
+  hidden                         Boolean?
+  accessRole                     String?
+  defaultReminders               Json?
+  allowedConferenceSolutionTypes Json?
+
+  @@map("_CalendarData")
+}
 
 generator client {
   provider = "prisma-client-js"

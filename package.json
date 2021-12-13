@@ -1,5 +1,5 @@
 {
-  "name": "Mirai-API",
+  "name": "mirai-api",
   "version": "0.0.1",
   "main": "index.js",
   "repository": "https://github.com/YuzuZensai/Mirai-API.git",
@@ -35,7 +35,7 @@
     "@types/mocha": "^9.0.0",
     "@types/node": "^16.7.1",
     "@types/validator": "^13.6.3",
-    "prisma": "^2.29.1",
+    "prisma": "^3.6.0",
     "ts-node-dev": "^1.1.8"
   }
 }
