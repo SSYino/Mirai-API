@@ -296,131 +296,69 @@ class Classrooms {
                 refresh_token: sessions.refresh_token,
             });
 
-            // const calendar = GoogleAPI.google.calendar("v3")
-            const calendar = google.calendar("v3");
-            console.log(new Date(unixTimestampLastMonth).toISOString());
+            const calendar = GoogleAPI.google.calendar("v3")
+            // const calendar = google.calendar("v3");
 
-            // const res = await calendar.calendarList.list({
-            //    // maxResults: <num>, // default: 100
-            //     showHidden: true,
-            //     auth: oAuth2Client
-            // })
+            // TODO | Fetch ALL events then create a custom filter using "start.dateTime" data from response (do not filter using timeMin field)
+            // Some teachers use old events created a long time ago that are recurring events that repeat every week
+            // (meaning that filtering using timeMin for "updated" time will not give accurate results)
             const res = await calendar.events.list({
                 calendarId: "primary",
                 orderBy: "updated",
                 maxResults: 2500,
                 timeMin: new Date(unixTimestampLastMonth).toISOString(), // 1 month prior to request time
-                // showDeleted: true,
                 auth: oAuth2Client
             })
-
+            
             const resData = res.data;
+            if (!resData.items) return "events list undefined";
+            
+            // Asynchronously update the database
+            (async () => {
+                const primaryCalendarData = (await calendar.calendarList.get({
+                    calendarId: "primary",
+                    auth: oAuth2Client
+                })).data
+    
+                const primaryEventsData = [];
+                for (const events of resData.items) {
+                    if (!events.id) continue;
+                    primaryEventsData.push({
+                        eventId: events.id,
+                        userId: user.id,
+                        data: JSON.parse(JSON.stringify(events))
+                    })
+                }
+                
+                await PrismaProvider.client.calendar.upsert({
+                    where: {
+                        id: "primary"
+                    },
+                    create: {
+                        id: "primary",
+                        owner: {
+                            connect: { id: user.id }
+                        },
+                        Events: {
+                            createMany: {
+                                data: primaryEventsData,
+                                skipDuplicates: true
+                            }
+                        },
+                        data: JSON.parse(JSON.stringify(primaryCalendarData))
+                    },
+                    update: {
+                        Events: {
+                            createMany: {
+                                data: primaryEventsData,
+                                skipDuplicates: true
+                            }
+                        },
+                        data: JSON.parse(JSON.stringify(primaryCalendarData))
+                    }
+                });
+            })();
 
-            // if (!resData.items) throw "resData.items is undefined"
-
-            // if (!resData.items.every(item => Object.values(item).every(val => val !== undefined || val !== null)))
-            //     throw "resData.items has items with id properties as undefined or null"
-            // if (!resData.items.every(item => {
-            //     console.log(item)
-            //     typeof item.id === "undefined" || item.id === null
-            // })) {
-            //     throw "resData.items has items with id properties as undefined or null"
-            // }
-
-            // const testArr = []
-            // for (const item of resData.items) {
-            //     if (!item.id) {
-            //         continue
-            //     }
-            //     else testArr.push(item)
-            // }
-
-            // const calendarsData = testArr.map(item => {
-            //     return {
-            //         id: item.id!,
-            //         kind: item.kind,
-            //         etag: item.etag,
-            //         summary: item.summary,
-            //         description: item.description,
-            //         timeZone: item.timeZone,
-            //         colorId: item.colorId,
-            //         backgroundColor: item.backgroundColor,
-            //         foregroundColor: item.foregroundColor,
-            //         selected: item.selected,
-            //         deleted: item.deleted,
-            //         accessRole: item.accessRole,
-            //         hidden: item.hidden,
-            //         primary: item.primary,
-            //         allowedConferenceSolutionTypes: item.conferenceProperties?.allowedConferenceSolutionTypes,
-            //         defaultReminders: item.defaultReminders as string[],
-            //         userId: user.id
-            //     }
-            // })
-
-            // await PrismaProvider.client.calendar.upsert({
-            //     where: { userId: user.id },
-            //     create: {
-            //         owner: {
-            //             connect: { id: user.id }
-            //         },
-            //         nextPageToken: resData.nextPageToken,
-            //         CalendarData: {
-            //             createMany: {
-            //                 skipDuplicates: true,
-            //                 data: calendarsData
-            //             }
-            //         },
-            //         items: calendarsData
-            //     },
-            //     update: {
-            //         nextPageToken: resData.nextPageToken,
-            //         CalendarData: {
-            //             createMany: {
-            //                 skipDuplicates: true,
-            //                 data: calendarsData
-            //             }
-            //         },
-            //         items: calendarsData
-            //     }
-            //     // data: {
-            //     //     calendarId: calendarData.id,
-            //     //     owner: {
-            //     //         connect: { id: user.id }
-            //     //     },
-            //     //     title: calendarData.summary,
-            //     //     description: calendarData.description,
-            //     //     location: calendarData.location,
-            //     //     foregroundColor: calendarData.foregroundColor,
-            //     //     backgroundColor: calendarData.backgroundColor,
-            //     //     deleted: calendarData.deleted,
-            //     //     hidden: calendarData.hidden,
-            //     //     primary: calendarData.primary,
-            //     //     selected: calendarData.selected,
-            //     //     timeZone: calendarData.timeZone
-            //     // }
-            // });
-
-            // TODO | finish the code below
-
-            // (async () => {
-            //     let all_id = [];
-            //     for (let c of courses) {
-            //         await PrismaProvider.client.classes.update({
-            //             where: { id: c.id },
-            //             data: c
-            //         });
-            //         all_id.push(c.id);
-            //     }
-
-            //     await PrismaProvider.client.users.update({
-            //         where: {
-            //             id: sessions.owner
-            //         },
-            //         data: {
-            //             classes: (all_id as Prisma.JsonArray)
-            //         }
-            //     });
-            // })();
             return resData;
         }
 

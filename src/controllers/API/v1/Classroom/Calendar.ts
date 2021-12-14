@@ -35,17 +35,10 @@ class Calendar {
             else {
                 userCalendar = await Classrooms.getCalendar(reqToken, true);
             }
-            // console.log(JSON.stringify(userCalendar.items))
-            // const testArr: any[] = [];
-            // userCalendar.items.map((item: any) => {
-            //     testArr.push(item.etag)
-            // })
-            // console.log(testArr)
 
             return res.status(HTTP_STATUS.OK).json({
                 total: userCalendar.items.length,
-                calendar: userCalendar,
-                sortedEvents: userCalendar.items.reverse()
+                calendar: userCalendar.items.reverse()
             });
         }
         catch { next() }
