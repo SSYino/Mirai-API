@@ -13,6 +13,7 @@
     "test": "mocha -r ts-node/register tests/**/*.ts"
   },
   "dependencies": {
+    "@prisma/client": "^3.6.0",
     "chai": "^4.3.4",
     "chai-http": "^4.3.0",
     "cors": "^2.8.5",
@@ -26,7 +27,6 @@
     "winston": "^3.3.3"
   },
   "devDependencies": {
-    "@prisma/client": "^2.29.1",
     "@types/chai": "^4.2.21",
     "@types/chai-http": "^4.2.0",
     "@types/cors": "^2.8.12",
