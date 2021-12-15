@@ -9,7 +9,7 @@
   "scripts": {
     "tsc": "tsc",
     "development": "ts-node-dev ./src/index.ts --respawn --transpileOnly",
-    "production": "tsc && node ./build/index.js",
+    "production": "tsc && node ./build/src/index.js",
     "test": "mocha -r ts-node/register tests/**/*.ts"
   },
   "dependencies": {
