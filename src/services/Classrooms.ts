@@ -310,8 +310,8 @@ class Classrooms {
                 maxResults: 2500,
                 showDeleted: false,
                 singleEvents: true,
-                timeMin: moment().subtract(range, "month").toISOString(), // <range> month prior to request time
-                timeMax: moment().add(range, "month").toISOString(),
+                timeMin: moment().subtract(range, "month").startOf("month").toISOString(), // <range> months prior to request time
+                timeMax: moment().add(range, "month").endOf("month").toISOString(), // <range> months after request time
                 auth: oAuth2Client
             })
 
