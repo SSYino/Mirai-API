@@ -342,14 +342,16 @@ class Classrooms {
                     if (!events.id) continue;
                     primaryEventsData.push({
                         eventId: events.id,
-                        userId: user.id,
                         data: JSON.parse(JSON.stringify(events))
                     })
                 }
                 
                 await PrismaProvider.client.calendar.upsert({
                     where: {
-                        id: "primary"
+                        id_userId: {
+                            id: "primary",
+                            userId: user.id
+                        }
                     },
                     create: {
                         id: "primary",
@@ -376,7 +378,7 @@ class Classrooms {
                 });
             })();
 
-            return filteredEvents;
+            return filteredEvents.reverse();
         }
 
         if (!cached) {

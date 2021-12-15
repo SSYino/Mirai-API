@@ -23,7 +23,6 @@ model Users {
   isSuspended Boolean    @default(false)
   createdAt   DateTime   @default(now()) @db.Timestamptz
   updatedAt   DateTime   @updatedAt @db.Timestamptz
-  Events      Event[]
 }
 
 model Sessions {
@@ -71,20 +70,23 @@ model Assignments {
 }
 
 model Calendar {
-  id     String  @id
+  id     String
   userId String
   owner  Users   @relation(fields: [userId], references: [id])
   data   Json
   Events Event[]
+
+  @@id([id, userId])
 }
 
 model Event {
-  eventId    String   @id
-  calendarId String
-  calendar   Calendar @relation(fields: [calendarId], references: [id])
+  eventId    String
   userId     String
-  owner      Users    @relation(fields: [userId], references: [id])
+  calendar   Calendar @relation(fields: [calendarId, userId], references: [id, userId])
+  calendarId String
   data       Json
+
+  @@id([eventId, userId])
 }
 
 generator client {
