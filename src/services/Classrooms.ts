@@ -306,30 +306,17 @@ class Classrooms {
             // (meaning that filtering using timeMin for "updated" time will not give accurate results)
             const res = await calendar.events.list({
                 calendarId: "primary",
-                orderBy: "updated",
+                orderBy: "startTime",
                 maxResults: 2500,
                 showDeleted: false,
                 singleEvents: true,
-                // timeMin: new Date(unixTimestampLastMonth).toISOString(), // 1 month prior to request time
+                timeMin: moment().subtract(range, "month").toISOString(), // <range> month prior to request time
+                timeMax: moment().add(range, "month").toISOString(),
                 auth: oAuth2Client
             })
 
             const resData = res.data;
             if (!resData.items) return "events list undefined";
-
-            const isInMonthRange = (event: calendar_v3.Schema$Event): boolean => {
-                const eventTime = event.start?.dateTime;
-                const prevMonthTime = moment().subtract(range, "month");
-                const futureMonthTime = moment().add(range, "month");
-                return moment(eventTime).isAfter(prevMonthTime) && moment(eventTime).isBefore(futureMonthTime);
-            }
-
-            const filteredEvents = [];
-            for (const event of resData.items) {
-                if (isInMonthRange(event)) {
-                    filteredEvents.push(event);
-                }
-            }
 
             // Asynchronously update the database
             (async () => {
@@ -339,7 +326,8 @@ class Classrooms {
                 })).data
 
                 const primaryEventsData = [];
-                for (const events of filteredEvents) {
+                if (!resData.items) return;
+                for (const events of resData.items) {
                     if (!events.id) continue;
                     primaryEventsData.push({
                         eventId: events.id,
@@ -379,7 +367,7 @@ class Classrooms {
                 });
             })();
 
-            return filteredEvents.reverse();
+            return resData.items.reverse();
         }
 
         if (!cached) {
