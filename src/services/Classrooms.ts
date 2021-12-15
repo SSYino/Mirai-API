@@ -283,7 +283,7 @@ class Classrooms {
         const user = await Users.getUser(sessions.owner);
         // const MILLISECONDS_IN_A_MONTH = 2_628_288_000;
         // const unixTimestampLastMonth = new Date().getTime() - MILLISECONDS_IN_A_MONTH;
-        
+
         const fetchUncached = async () => {
             const credentials = GoogleAPI.getConfig();
 
@@ -313,30 +313,31 @@ class Classrooms {
                 // timeMin: new Date(unixTimestampLastMonth).toISOString(), // 1 month prior to request time
                 auth: oAuth2Client
             })
-            
+
             const resData = res.data;
             if (!resData.items) return "events list undefined";
 
-            const isAfterLastMonth = (event: calendar_v3.Schema$Event): boolean => {
+            const isInMonthRange = (event: calendar_v3.Schema$Event): boolean => {
                 const eventTime = event.start?.dateTime;
                 const prevMonthTime = moment().subtract(range, "month");
-                return moment(eventTime).isAfter(prevMonthTime);
+                const futureMonthTime = moment().add(range, "month");
+                return moment(eventTime).isAfter(prevMonthTime) && moment(eventTime).isBefore(futureMonthTime);
             }
-            
+
             const filteredEvents = [];
             for (const event of resData.items) {
-                if (isAfterLastMonth(event)) {
+                if (isInMonthRange(event)) {
                     filteredEvents.push(event);
                 }
             }
-            
+
             // Asynchronously update the database
             (async () => {
                 const primaryCalendarData = (await calendar.calendarList.get({
                     calendarId: "primary",
                     auth: oAuth2Client
                 })).data
-    
+
                 const primaryEventsData = [];
                 for (const events of filteredEvents) {
                     if (!events.id) continue;
@@ -345,7 +346,7 @@ class Classrooms {
                         data: JSON.parse(JSON.stringify(events))
                     })
                 }
-                
+
                 await PrismaProvider.client.calendar.upsert({
                     where: {
                         id_userId: {
