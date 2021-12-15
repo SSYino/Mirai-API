@@ -16,9 +16,14 @@ class Calendar {
 
             let userCalendar;
 
+            if (req.query.range && isNaN(parseInt(req.query.range)))
+                throw new ServiceError(HTTP_STATUS.BAD_REQUEST, "Not a valid range")
+
+            const range: number = req.query.range ? parseInt(req.query.range) : 1;
+
             if (!req.query.cache) {
                 try {
-                    userCalendar = await Classrooms.getCalendar(reqToken, false)
+                    userCalendar = await Classrooms.getCalendar(reqToken, false, range)
                 } catch (err: any) {
                     Logger.log('warn', 'Cannot get google calendar data');
                     Logger.log('warn', err.stack);
@@ -33,15 +38,15 @@ class Calendar {
 
             }
             else {
-                userCalendar = await Classrooms.getCalendar(reqToken, true);
+                userCalendar = await Classrooms.getCalendar(reqToken, true, range);
             }
 
             return res.status(HTTP_STATUS.OK).json({
-                total: userCalendar.items.length,
-                calendar: userCalendar.items.reverse()
+                total: userCalendar.length,
+                calendar: userCalendar.reverse()
             });
         }
-        catch { next() }
+        catch (err) { next(err) }
     }
 }
 
