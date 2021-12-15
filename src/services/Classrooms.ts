@@ -8,7 +8,6 @@ import Logger from "../libs/Logger";
 
 import { Prisma } from '@prisma/client';
 import Users from "./Users";
-import { calendar_v3, google } from "googleapis";
 import moment from "moment";
 
 class Classrooms {
@@ -281,8 +280,6 @@ class Classrooms {
     public static async getCalendar(token: string, cached: boolean, range: number = 1) {
         let sessions = await Sessions.getGoogleToken(token);
         const user = await Users.getUser(sessions.owner);
-        // const MILLISECONDS_IN_A_MONTH = 2_628_288_000;
-        // const unixTimestampLastMonth = new Date().getTime() - MILLISECONDS_IN_A_MONTH;
 
         const fetchUncached = async () => {
             const credentials = GoogleAPI.getConfig();
@@ -298,12 +295,8 @@ class Classrooms {
                 refresh_token: sessions.refresh_token,
             });
 
-            // const calendar = GoogleAPI.google.calendar("v3")
-            const calendar = google.calendar("v3");
+            const calendar = GoogleAPI.google.calendar("v3")
 
-            // TODO | Fetch ALL events then create a custom filter using "start.dateTime" data from response (do not filter using timeMin field)
-            // Some teachers use old events created a long time ago that are recurring events that repeat every week
-            // (meaning that filtering using timeMin for "updated" time will not give accurate results)
             const res = await calendar.events.list({
                 calendarId: "primary",
                 orderBy: "startTime",
