@@ -9,6 +9,7 @@ import Sessions from '../../middlewares/Sessions';
 import Profile from '../../controllers/API/v1/Users/Profile';
 import Classes from '../../controllers/API/v1/Classroom/Classes';
 import Assignments from '../../controllers/API/v1/Classroom/Assignments';
+import Meetings from '../../controllers/API/v1/Classroom/Meetings';
 //import CourseWorks from '../../controllers/API/v1/Classrooms/CourseWorks';
 import AdminUsers from '../../controllers/API/v1/Admin/Users';
 import AdminSessions from '../../controllers/API/v1/Admin/Sessions';
@@ -36,6 +37,7 @@ router.get('/admin/sessions', RateLimit.defaultAPI, Sessions.isAuthenticated, Us
 
 router.get('/classroom/classes', RateLimit.defaultAPI, Sessions.isAuthenticated, Classes.perform);
 router.get('/classroom/assignments', RateLimit.defaultAPI, Sessions.isAuthenticated, Assignments.perform);
+router.get('/classroom/meetings', RateLimit.defaultAPI, Sessions.isAuthenticated, Meetings.perform);
 
 //router.get('/classrooms/courseworks', RateLimit.defaultAPI, Sessions.isAuthenticated, CourseWorks.perform);
 
