@@ -147,7 +147,7 @@ class Classrooms {
                         });
 
                         if (!courses_assigments.data.courseWork)
-                            return resolve(courses_assigments.data.courseWork);
+                            return resolve(undefined);
 
                         let idToData: any = {};
                         for (let courses of courses_assigments.data.courseWork) {
@@ -276,6 +276,124 @@ class Classrooms {
             return sorted;
         }
 
+    }
+
+    public static async getCalendar(token: string, cached: boolean, range: number = 1) {
+        let sessions = await Sessions.getGoogleToken(token);
+        const user = await Users.getUser(sessions.owner);
+
+        const fetchUncached = async () => {
+            const credentials = GoogleAPI.getConfig();
+
+            const oAuth2Client = new GoogleAPI.google.auth.OAuth2(
+                credentials.web.client_id,
+                credentials.web.client_secret,
+                credentials.web.redirect_uris[0]
+            );
+
+            await oAuth2Client.setCredentials({
+                access_token: sessions.access_token,
+                refresh_token: sessions.refresh_token,
+            });
+
+            const calendar = GoogleAPI.google.calendar("v3")
+
+            const res = await calendar.events.list({
+                calendarId: "primary",
+                orderBy: "startTime",
+                maxResults: 2500,
+                showDeleted: false,
+                singleEvents: true,
+                timeMin: moment().subtract(range, "month").startOf("month").toISOString(), // <range> months prior to request time
+                timeMax: moment().add(range, "month").endOf("month").toISOString(), // <range> months after request time
+                auth: oAuth2Client
+            })
+
+            const resData = res.data;
+            if (!resData.items) return "events list undefined";
+
+            // Asynchronously update the database
+            (async () => {
+                const primaryCalendarData = (await calendar.calendarList.get({
+                    calendarId: "primary",
+                    auth: oAuth2Client
+                })).data
+
+                const primaryEventsData = [];
+                if (!resData.items) return;
+                for (const events of resData.items) {
+                    if (!events.id) continue;
+                    primaryEventsData.push({
+                        eventId: events.id,
+                        data: JSON.parse(JSON.stringify(events))
+                    })
+                }
+
+                await PrismaProvider.client.calendar.upsert({
+                    where: {
+                        id_userId: {
+                            id: "primary",
+                            userId: user.id
+                        }
+                    },
+                    create: {
+                        id: "primary",
+                        owner: {
+                            connect: { id: user.id }
+                        },
+                        Events: {
+                            createMany: {
+                                data: primaryEventsData,
+                                skipDuplicates: true
+                            }
+                        },
+                        data: JSON.parse(JSON.stringify(primaryCalendarData))
+                    },
+                    update: {
+                        Events: {
+                            createMany: {
+                                data: primaryEventsData,
+                                skipDuplicates: true
+                            }
+                        },
+                        data: JSON.parse(JSON.stringify(primaryCalendarData))
+                    }
+                });
+            })();
+
+            return resData.items.reverse();
+        }
+
+        if (!cached) {
+            return await fetchUncached();
+        }
+        else {
+            let user = await Users.getUser(sessions.owner);
+
+            if ((user.classes as string[]) == null)
+                return await fetchUncached();
+
+            let courses = await PrismaProvider.client.classes.findMany({
+                where: {
+                    id: {
+                        in: (user.classes as string[])
+                    }
+                }
+            });
+
+            let sorted: any = [];
+            for (const id of (user.classes as string[])) {
+
+                const result = courses.filter(obj => {
+                    return obj.id === id
+                });
+
+                if (result[0])
+                    sorted.push(result[0]);
+            }
+
+            return sorted;
+        }
     }
 
     public static async getMeetings(token: string, cached: boolean) {
