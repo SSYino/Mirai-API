@@ -17,7 +17,7 @@ class GoogleAPI {
     ];
 
     public google: any;
-
+    
     constructor () {
         this.google = google;
     }
