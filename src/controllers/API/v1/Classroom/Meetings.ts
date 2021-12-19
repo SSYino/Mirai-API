@@ -12,10 +12,11 @@ class Meetings {
             let reqToken = Sessions.extractTokenHeader(req);
             //let sessionOwner = await Sessions.getTokenOwner(reqToken);
             let meetings;
+            const isToday: boolean | undefined = req.query.today;
 
             if (!req.query.cache) {
                 try {
-                    meetings = await Classrooms.getMeetings(reqToken, false)
+                    meetings = await Classrooms.getMeetings(reqToken, isToday, false)
                 } catch (err: any) {
                     Logger.log('warn', 'Cannot get google meetings data');
                     Logger.log('warn', err.stack);
@@ -30,7 +31,7 @@ class Meetings {
 
             }
             else {
-                meetings = await Classrooms.getMeetings(reqToken, true);
+                meetings = await Classrooms.getMeetings(reqToken, isToday, true);
             }
 
             return res.status(HTTP_STATUS.OK).json({ meetings });

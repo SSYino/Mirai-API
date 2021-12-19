@@ -396,7 +396,7 @@ class Classrooms {
         }
     }
 
-    public static async getMeetings(token: string, cached: boolean) {
+    public static async getMeetings(token: string, today: boolean = false, cached: boolean) {
 
         let sessions = await Sessions.getGoogleToken(token);
         let sessionOwner = await Sessions.getTokenOwner(token);
@@ -421,80 +421,68 @@ class Classrooms {
         const fetchUncached = async () => {
 
             const calendar = google.calendar("v3");
+            let meetingsData;
 
-            const partialCalendarEvents = await calendar.events.list({
-                calendarId: "primary",
-                orderBy: "startTime",
-                singleEvents: true,
-                timeMin: moment().subtract(1, "day").toISOString(),
-                timeMax: moment().add(1, "day").toISOString(),
-                auth: oAuth2Client
-            })
+            if (today) {
+                const partialCalendarEvents = await calendar.events.list({
+                    calendarId: "primary",
+                    orderBy: "startTime",
+                    singleEvents: true,
+                    fields: "items(summary,creator,organizer,hangoutLink,start,end)",
+                    timeMin: moment().subtract(1, "day").toISOString(),
+                    timeMax: moment().add(1, "day").toISOString(),
+                    auth: oAuth2Client
+                })
 
-            const calendarEventsToday = partialCalendarEvents.data.items?.filter(event => moment().isSame(event.start?.dateTime, "day"))
+                if (!partialCalendarEvents.data.items) throw "data.items undefined";
 
-            const allCalendars = await calendar.calendarList.list({
-                auth: oAuth2Client
-            });
-            const calendarIds = allCalendars.data.items!.map(calendar => calendar.id!);
-            const meetings: any = [];
+                const calendarEventsToday = partialCalendarEvents.data.items.filter(event => moment().isSame(event.start?.dateTime, "day"))
 
-            const allEvents = await calendar.events.list({
-                calendarId: "primary",
-                // sharedExtendedProperty: ["items=[]"],
-                auth: oAuth2Client
-            })
-
-            allEvents.data.items?.forEach(event => {
-                if (!meetings.includes(event.hangoutLink))
-                    meetings.push({
-                        name: event.summary,
-                        link: event.hangoutLink
-                    })
-            })
-            // const t1 = Date.now()
-            // for (const calendarId of calendarIds) {
-            //     const event = await calendar.events.list({
-            //         calendarId,
-            //         // maxResults: 1,
-            //         auth: oAuth2Client
-            //     })
-            //     // console.log(event.data.items![0])
-            //     const meetLink = event.data.items?.reverse().find(event => event.hangoutLink);
-            //     // console.log(meetLink, calendarId)
-            //     console.log(event.data.items)
-            //     meetings.push({
-            //         className: event.data.summary,
-            //         meetLink
-            //     })
-            // }
-            // const t2 = Date.now()
-            // console.log(t2 - t1)
-
-            return {
-                today: calendarEventsToday,
-                allEvents: {
-                    total: allEvents.data.items?.length,
-                    items: allEvents.data.items
-                },
-                meetings
-                // allCalendars: {
-                //     total: allCalendars.data.items?.length,
-                //     items: allCalendars.data.items
-                // }
+                meetingsData = {
+                    today: {
+                        total: calendarEventsToday?.length,
+                        items: calendarEventsToday
+                    }
+                }
             }
-            // const classes = await this.getClasses(token, "ACTIVE", true);
+            else {
+                const meetings = new Map();
 
-            // let data: any = [];
-            // let requests = [];
+                const allEvents = await calendar.events.list({
+                    calendarId: "primary",
+                    maxResults: 2500,
+                    orderBy: "updated",
+                    fields: "items(status,summary,creator,organizer,hangoutLink,start,end)",
+                    timeMin: moment().subtract(3, "month").startOf("month").toISOString(),
+                    timeMax: moment().add(3, "month").endOf("month").toISOString(),
+                    auth: oAuth2Client
+                })
 
+                if (!allEvents.data.items) throw "data.items undefined";
 
+                for (const event of allEvents.data.items) {
+                    if (event.status === "cancelled" || !event.hangoutLink) continue;
 
+                    delete event.status;
+                    meetings.set(event.summary, {
+                        ...event
+                    })
+                }
+
+                meetingsData = {
+                    all: {
+                        total: meetings.size,
+                        items: Array.from(meetings.values())
+                    }
+                }
+            }
+
+            // Asycnhronously update the database
             // (async () => {
 
             // })();
 
-            // return sorted;
+            return meetingsData
         }
 
         if (!cached) {
