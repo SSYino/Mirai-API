@@ -43,7 +43,7 @@ class Calendar {
 
             return res.status(HTTP_STATUS.OK).json({
                 total: userCalendar.length,
-                calendar: userCalendar
+                items: userCalendar
             });
         }
         catch (err) { next(err) }
