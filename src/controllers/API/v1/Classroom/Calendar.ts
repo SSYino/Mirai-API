@@ -21,7 +21,7 @@ class Calendar {
 
             const range: number = req.query.range ? parseInt(req.query.range) : 1;
 
-            if (!req.query.cache) {
+            if (req.query.cache === 'false') {
                 try {
                     userCalendar = await Classrooms.getCalendar(reqToken, false, range)
                 } catch (err: any) {

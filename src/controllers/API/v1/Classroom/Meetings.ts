@@ -14,7 +14,7 @@ class Meetings {
             let meetings;
             const isToday: boolean | undefined = req.query.today;
 
-            if (!req.query.cache) {
+            if (req.query.cache === 'false') {
                 try {
                     meetings = await Classrooms.getMeetings(reqToken, isToday, false)
                 } catch (err: any) {

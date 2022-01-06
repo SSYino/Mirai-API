@@ -17,7 +17,7 @@ class Classes {
 
             let userClasses;
             
-            if(!req.query.cache) {
+            if (req.query.cache === 'false') {
                 try {
                     userClasses = await Classrooms.getClasses(reqToken, "ACTIVE", false);
                 } catch (err: any) {

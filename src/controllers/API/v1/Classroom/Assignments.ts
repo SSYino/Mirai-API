@@ -17,7 +17,7 @@ class Assignments {
 
             let userAssignments;
             
-            if(!req.query.cache) {
+            if (req.query.cache === 'false') {
                 try {
                     userAssignments = await Classrooms.getAssignments(reqToken, "PUBLISHED", false);
                 } catch (err: any) {
