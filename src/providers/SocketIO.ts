@@ -63,23 +63,29 @@ class SocketIO {
             return next();
         })
 
+        const everyone = this.io.of("/")
         const student = this.io.of("/student")
         const teacher = this.io.of("/teacher")
 
-        student.on("connection", async (socket: Socket) => {
+        everyone.on("connection", async (socket: Socket) => {
             const user = await Users.getUser(socket.userId)
             console.log(`User ${user.given_name} ${user.family_name} connected with socketId "${socket.id}"`)
             // socket.send("You connected")
             socket.on("message", (data) => {
-                console.log(`${socket.id} said ${data.msg}`)
-                this.io.emit("message", { msg: data.msg, user })
+                console.log(`${user.given_name} ${user.family_name} said "${data.msg}"`)
+                everyone.emit("message", { msg: data.msg, user })
             })
 
             socket.on("disconnect", () => {
-                console.log(`User ${socket.id} disconnected`)
+                console.log(`User ${user.given_name} ${user.family_name} DISCONNECTED with socketId "${socket.id}"`)
             })
         })
 
+        // TODO : Finish student namespace
+        student.on("connection", (socket: Socket) => {
+            console.log("A teacher connected")
+        })
+        
         // TODO : Finish teacher namespace
         teacher.on("connection", (socket: Socket) => {
             console.log("A teacher connected")
