@@ -7,22 +7,26 @@ datasource db {
 }
 
 model Users {
-  id          String     @id
-  given_name  String
-  family_name String
-  email       String
-  picture_url String
-  sessions    Sessions[]
-  classes     Json?
-  assignments Json?
-  Calendars   Calendar[]
-  isAdmin     Boolean    @default(false)
-  isDeveloper Boolean    @default(false)
-  isTeacher   Boolean    @default(false)
-  isStudent   Boolean    @default(true)
-  isSuspended Boolean    @default(false)
-  createdAt   DateTime   @default(now()) @db.Timestamptz
-  updatedAt   DateTime   @updatedAt @db.Timestamptz
+  id                   String     @id
+  given_name           String
+  family_name          String
+  email                String
+  grade_level          String?
+  grade_room           String?
+  student_class_number Int?
+  student_id           String?
+  picture_url          String
+  sessions             Sessions[]
+  classes              Json?
+  assignments          Json?
+  Calendars            Calendar[]
+  isAdmin              Boolean    @default(false)
+  isDeveloper          Boolean    @default(false)
+  isTeacher            Boolean    @default(false)
+  isStudent            Boolean    @default(true)
+  isSuspended          Boolean    @default(false)
+  createdAt            DateTime   @default(now()) @db.Timestamptz
+  updatedAt            DateTime   @updatedAt @db.Timestamptz
 }
 
 model Sessions {
