@@ -15,12 +15,13 @@ import Meetings from '../../controllers/API/v1/Classroom/Meetings';
 import AdminUsers from '../../controllers/API/v1/Admin/Users';
 // import AdminSessions from '../../controllers/API/v1/Admin/Sessions';
 import Users from '../../middlewares/Users';
+import Chat from '../../controllers/API/v1/Classroom/Chat';
 
 
 const router = express.Router();
 
 let isDevEnv = (req: any, res: any, next: any) => {
-    if(Environment.get().NODE_ENV == 'development') {
+    if (Environment.get().NODE_ENV == 'development') {
         return next();
     }
     else {
@@ -40,6 +41,7 @@ router.get('/classroom/classes', RateLimit.defaultAPI, Sessions.isAuthenticated,
 router.get('/classroom/assignments', RateLimit.defaultAPI, Sessions.isAuthenticated, Assignments.perform);
 router.get('/classroom/calendar', RateLimit.defaultAPI, Sessions.isAuthenticated, Calendar.perform)
 router.get('/classroom/meetings', RateLimit.defaultAPI, Sessions.isAuthenticated, Meetings.perform);
+router.get('/classroom/chat', RateLimit.defaultAPI, Sessions.isAuthenticated, Chat.perform)
 
 //router.get('/classrooms/courseworks', RateLimit.defaultAPI, Sessions.isAuthenticated, CourseWorks.perform);
 
