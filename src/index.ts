@@ -5,6 +5,7 @@ NativeException.process();
 
 App.loadENV();
 App.loadExpress();
+App.loadSocketIO()
 App.loadPrisma();
 App.loadGoogleAPI();
 

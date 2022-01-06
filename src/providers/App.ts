@@ -4,6 +4,7 @@ import Environment from './Environment';
 import Express from './Express';
 import GoogleAPI from './GoogleAPI';
 import Prisma from './Prisma';
+import SocketIO from './SocketIO';
 
 class App {
 
@@ -31,7 +32,10 @@ class App {
         Logger.log('info', 'Loading GoogleAPI');
         GoogleAPI.init();
     }
-
+    public loadSocketIO(): void {
+        Logger.log('info', 'Loading SocketIO');
+        SocketIO.init();
+    }
 }
 
 export default new App;
