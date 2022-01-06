@@ -58,8 +58,6 @@ class SocketIO {
             // Assign user id to socket
             socket.userId = await Sessions.getTokenOwner(token);
 
-            // console.log(socket.handshake)
-            // console.log(socket.userId)
             return next();
         })
 
@@ -71,9 +69,41 @@ class SocketIO {
             const user = await Users.getUser(socket.userId)
             console.log(`User ${user.given_name} ${user.family_name} connected with socketId "${socket.id}"`)
             // socket.send("You connected")
+
+            const { grade_level, grade_room } = user
+            // Check if user is a student or a teacher and join rooms accordingly
+            // if (!(grade_level && grade_room)) {
+            //     // Is not a student
+            //     console.log("Is not a student")
+            //     // TODO : Make chat room logic for teachers
+            // } else {
+            //     // Is a student
+            //     const socketRoom = grade_level + "/" + grade_room
+            //     socket.join(["/", "students", socketRoom])
+            // }
+            const socketRoom = grade_level + "/" + grade_room
+            socket.join(["/", "students", socketRoom])
+
             socket.on("message", (data) => {
-                console.log(`${user.given_name} ${user.family_name} said "${data.msg}"`)
-                everyone.emit("message", { msg: data.msg, user })
+                console.log(`${user.given_name} ${user.family_name} said "${data.msg}" ${data.room ? `in room ${data.room}` : "in main room"}`)
+                // console.log(socket.rooms)
+
+                if (data.room) {
+                    if (!socket.rooms.has(data.room)) {
+                        const roomData = {
+                            name: data.room,
+                            members: ["not yet implemented"],
+                            messages: [data.msg]
+                        }
+                        socket.join(data.room)
+                        socket.emit("new-room", { room: roomData })
+                    }
+
+                    everyone.in(data.room).emit("message", { msg: data.msg, user, room: data.room }) // Remove room prop later
+                }
+                else {
+                    everyone.in("/").emit("message", { msg: data.msg, user, room: "/" }) // Remove room prop later
+                }
             })
 
             socket.on("disconnect", () => {
@@ -83,9 +113,9 @@ class SocketIO {
 
         // TODO : Finish student namespace
         student.on("connection", (socket: Socket) => {
-            console.log("A teacher connected")
+            console.log("A student connected")
         })
-        
+
         // TODO : Finish teacher namespace
         teacher.on("connection", (socket: Socket) => {
             console.log("A teacher connected")
