@@ -420,6 +420,7 @@ class Classrooms {
 
         const fetchUncached = async () => {
 
+            // TODO: Use user timestamp instead
             const calendar = google.calendar("v3");
             let meetingsData;
 

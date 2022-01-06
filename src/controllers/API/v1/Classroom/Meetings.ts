@@ -16,7 +16,7 @@ class Meetings {
 
             if (req.query.cache === 'false') {
                 try {
-                    meetings = await Classrooms.getMeetings(reqToken, isToday, false)
+                    meetings = await Classrooms.getMeetings(reqToken, isToday, false);
                 } catch (err: any) {
                     Logger.log('warn', 'Cannot get google meetings data');
                     Logger.log('warn', err.stack);
@@ -31,7 +31,7 @@ class Meetings {
 
             }
             else {
-                meetings = await Classrooms.getMeetings(reqToken, isToday, true);
+                meetings = await Classrooms.getMeetings(reqToken, isToday, false);//true);
             }
 
             return res.status(HTTP_STATUS.OK).json({ meetings });
