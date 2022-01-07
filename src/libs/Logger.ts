@@ -28,7 +28,7 @@ const colors = {
 
 winston.addColors(colors);
 
-const format = winston.format.combine(
+const consoleFormat = winston.format.combine(
     winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss:ms' }),
     winston.format.colorize({ all: true }),
     winston.format.printf(
@@ -36,8 +36,17 @@ const format = winston.format.combine(
     )
 );
 
+const format = winston.format.combine(
+    winston.format.timestamp({
+        format: new Date().toISOString()
+    }),
+    winston.format.json()
+)
+
 const transports = [
-    new winston.transports.Console(),
+    new winston.transports.Console({
+        format: consoleFormat
+    }),
     new winston.transports.File({
         filename: 'logs/error.log',
         level: 'error',
