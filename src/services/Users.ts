@@ -101,7 +101,36 @@ class Users {
         if (!doesExist) {
             await Users.createUser(profile.data.id, gmail.data.emailAddress, profile.data.given_name, profile.data.family_name, profile.data.picture);
         } else {
-            // TODO: Check if user data was changed and update it on the database.
+            const user = await this.getUser(profile.data.id);
+
+            // This should not be possible at all
+            if(user.id !== profile.data.id) {
+                throw new ServiceError(HTTP_STATUS.FORBIDDEN, 'Your GoogleID has been changed! Please contact the developer'); 
+            }
+
+            if (
+                user.given_name !== profile.data.given_name ||
+                user.family_name !== profile.data.family_name ||
+                user.email !== gmail.data.emailAddress ||
+                user.picture_url !== profile.data.picture) {
+
+                const result = await Prisma.client.users.update({
+                    where: {
+                        id: user.id
+                    },
+                    data: {
+                        given_name: profile.data.given_name,
+                        family_name: profile.data.family_name,
+                        email: gmail.data.emailAddress,
+                        picture_url: profile.data.picture,
+                    }
+                });
+
+                if (result == null)
+                    throw new DatabaseError("User update failed, result is null");
+
+            }
+            
         }
 
         if(await this.isSuspended(profile.data.id)) {
