@@ -67,14 +67,14 @@ class SocketIO {
 
         everyone.on("connection", async (socket: Socket) => {
             const user = await Users.getUser(socket.userId)
-            console.log(`User ${user.given_name} ${user.family_name} connected with socketId "${socket.id}"`)
+            Logger.log("debug", `User ${user.given_name} ${user.family_name} connected with socketId "${socket.id}"`)
             // socket.send("You connected")
 
             const { grade_level, grade_room } = user
             // Check if user is a student or a teacher and join rooms accordingly
             // if (!(grade_level && grade_room)) {
             //     // Is not a student
-            //     console.log("Is not a student")
+            //     Logger.log("debug", "Is not a student")
             //     // TODO : Make chat room logic for teachers
             // } else {
             //     // Is a student
@@ -85,8 +85,8 @@ class SocketIO {
             socket.join(["/", "students", socketRoom])
 
             socket.on("message", (data) => {
-                console.log(`${user.given_name} ${user.family_name} said "${data.msg}" ${data.room ? `in room ${data.room}` : "in main room"}`)
-                // console.log(socket.rooms)
+                Logger.log("debug", `${user.given_name} ${user.family_name} said "${data.msg}" ${data.room ? `in room ${data.room}` : "in main room"}`)
+                // Logger.log("debug", socket.rooms)
 
                 if (data.room) {
                     if (!socket.rooms.has(data.room)) {
@@ -107,18 +107,18 @@ class SocketIO {
             })
 
             socket.on("disconnect", () => {
-                console.log(`User ${user.given_name} ${user.family_name} DISCONNECTED with socketId "${socket.id}"`)
+                Logger.log("debug", `User ${user.given_name} ${user.family_name} DISCONNECTED with socketId "${socket.id}"`)
             })
         })
 
         // TODO : Finish student namespace
         student.on("connection", (socket: Socket) => {
-            console.log("A student connected")
+            Logger.log("debug", "A student connected")
         })
 
         // TODO : Finish teacher namespace
         teacher.on("connection", (socket: Socket) => {
-            console.log("A teacher connected")
+            Logger.log("debug", "A teacher connected")
         })
 
         Logger.log("info", "Socket server started")
