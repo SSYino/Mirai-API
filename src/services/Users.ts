@@ -9,10 +9,6 @@ import Sessions from './Sessions';
 import Logger from '../libs/Logger';
 import HTTP_STATUS from '../libs/HTTPStatus';
 
-const WHITELIST = [
-
-];
-
 class Users {
 
     constructor() {
@@ -88,9 +84,6 @@ class Users {
 
         profile = await oauth2.userinfo.get();
 
-        if(!this.isWhitelisted(profile.data.id))
-            throw new ServiceError(HTTP_STATUS.FORBIDDEN, `GoogleID not whitelisted, If you wish to access the application, please contact the developer and give them your user id (${profile.data.id})`);        
-        
         let doesExist = await Users.exists(profile.data.id);        
         let gmail = await GoogleAPI.google.gmail('v1').users.getProfile({
             userId: profile.data.id,
@@ -275,11 +268,6 @@ class Users {
             return false;
 
         return true;
-    }
-
-    public static isWhitelisted(id: string) {
-        return true;
-        //return WHITELIST.includes(id)
     }
 
     public static async isAdmin(id: string) {
