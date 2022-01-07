@@ -64,6 +64,7 @@ model Assignments {
   creationTime   DateTime @db.Timestamptz
   updateTime     DateTime @db.Timestamptz
   state          String
+  late           Boolean?
   alternateLink  String
   courseWorkType String
   title          String

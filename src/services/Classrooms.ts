@@ -138,6 +138,24 @@ class Classrooms {
             let data: any = [];
             let requests = [];
 
+            const isLate = (courseWork: any): boolean | null => {
+                if (!courseWork.dueDate || !courseWork.dueTime)
+                    return null
+                
+                const { year, month, day } = courseWork.dueDate
+                const { hours, minutes } = courseWork.dueTime
+
+                const timeNow = moment()
+                const dueTime = moment(`${year}-${month}-${day} ${hours}:${minutes ?? "00"}`)
+
+                if (!dueTime.isValid())
+                    console.log("not valid time", dueTime, {
+                        year, month, day, hours, minutes
+                    })
+
+                return timeNow.isAfter(dueTime)
+            }
+
             for (let _class of classes) {
                 requests.push(new Promise(async (resolve, reject) => {
                     try {
@@ -152,7 +170,8 @@ class Classrooms {
                         let idToData: any = {};
                         for (let courses of courses_assigments.data.courseWork) {
                             idToData[courses.id] = {
-                                title: courses.title
+                                title: courses.title,
+                                late: isLate(courses)
                             };
                         }
 
@@ -168,6 +187,7 @@ class Classrooms {
                         if (res.data.studentSubmissions) {
                             for (let cw of res.data.studentSubmissions) {
                                 cw.title = idToData[cw.courseWorkId].title;
+                                cw.late = idToData[cw.courseWorkId].late;
                                 data.push(cw);
                             }
                         }
@@ -193,6 +213,7 @@ class Classrooms {
                     creationTime: db_e.creationTime,
                     updateTime: db_e.updateTime,
                     state: db_e.state,
+                    late: db_e.late,
                     alternateLink: db_e.alternateLink,
                     courseWorkType: db_e.courseWorkType,
                     title: db_e.title
