@@ -43,10 +43,8 @@ class DebugLogs {
 
             
             let userData: any = {
-                data: {
-                    logs: logs(),
-                    errorLogs: errorLogs()
-                }
+                logs: logs(),
+                errorLogs: errorLogs()
             };
 
             return res.status(HTTP_STATUS.OK).json(userData);
