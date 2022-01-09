@@ -280,7 +280,16 @@ class Users {
         return user.isAdmin;
     }
 
-    
+    public static async isDeveloper(id: string) {
+
+        if(!this.isGoogleIdValid(id))
+            throw new ServiceError(HTTP_STATUS.BAD_REQUEST, 'Invalid GoogleID');
+
+        let user = await this.getUser(id);
+
+        return user.isDeveloper;
+    }
+
     public static async isSuspended(id: string) {
 
         if(!this.isGoogleIdValid(id))
