@@ -201,7 +201,7 @@ class Classrooms {
             }
 
             await Promise.all(requests)
-            let sorted = data.sort((a: any, b: any) => (a.courseWorkId > b.courseWorkId) ? 1 : ((b.courseWorkId > a.courseWorkId) ? -1 : 0));
+            let sorted = data.sort((a: any, b: any) => moment(a.updateTime).isAfter(moment(b.updateTime)) ? -1 : 1);
 
             let db_data = [];
 
