@@ -34,7 +34,7 @@ class Users {
 
     public static async createUser(id: string, email: string, given_name: string, family_name: string, picture_url: string) {
 
-        if(!this.isGoogleIdValid(id))
+        if (!this.isGoogleIdValid(id))
             throw new ServiceError(HTTP_STATUS.BAD_REQUEST, 'Invalid GoogleID');
 
         let doesExist = await Users.exists(id);
@@ -42,12 +42,34 @@ class Users {
         if (doesExist)
             throw new ServiceError(HTTP_STATUS.CONFLICT, 'Google ID already exists');
 
+        const studentIdRegex = /^\d+/
+        const userDataRegex = /^(\d+)\.(\d+)\s/
+        const match1 = email.match(studentIdRegex)
+        const match2 = given_name.match(userDataRegex)
+
+        let student_id
+        let grade_level
+        let grade_room
+        let student_class_number
+
+        if (match1) student_id = match1[0]
+        if (match2) {
+            const [_, grade, studentNumber] = match2
+            grade_level = grade.substring(0, 1)
+            grade_room = grade.substring(1)
+            student_class_number = parseInt(studentNumber)
+        }
+
         const result = await Prisma.client.users.create({
             data: {
                 id: id,
                 given_name: given_name,
                 family_name: family_name,
                 email: email,
+                grade_level,
+                grade_room,
+                student_class_number,
+                student_id,
                 picture_url: picture_url,
             },
         });
@@ -69,7 +91,7 @@ class Users {
         try {
             token = await oAuth2Client.getToken(code);
         } catch (err: any) {
-            if(err?.response?.data?.error === "invalid_grant")
+            if (err?.response?.data?.error === "invalid_grant")
                 throw new ServiceError(HTTP_STATUS.UNAUTHORIZED, "Invalid Google OAuth2 grant");
             else
                 throw err;
@@ -97,8 +119,8 @@ class Users {
             const user = await this.getUser(profile.data.id);
 
             // This should not be possible at all
-            if(user.id !== profile.data.id) {
-                throw new ServiceError(HTTP_STATUS.FORBIDDEN, 'Your GoogleID has been changed! Please contact the developer'); 
+            if (user.id !== profile.data.id) {
+                throw new ServiceError(HTTP_STATUS.FORBIDDEN, 'Your GoogleID has been changed! Please contact the developer');
             }
 
             if (
@@ -123,16 +145,16 @@ class Users {
                     throw new DatabaseError("User update failed, result is null");
 
             }
-            
+
         }
 
-        if(await this.isSuspended(profile.data.id)) {
-            throw new ServiceError(HTTP_STATUS.FORBIDDEN, 'Your account is currently suspended'); 
+        if (await this.isSuspended(profile.data.id)) {
+            throw new ServiceError(HTTP_STATUS.FORBIDDEN, 'Your account is currently suspended');
         }
 
         const issuedToken = await Sessions.issueToken(profile.data.id, token.tokens.access_token, token.tokens.refresh_token, token.tokens.expiry_date);
         const user = await this.getUser(profile.data.id);
-            
+
         return {
             token: issuedToken,
             profile: {
@@ -153,7 +175,7 @@ class Users {
     }
 
     public static async getUser(id: string) {
-        if(!this.isGoogleIdValid(id))
+        if (!this.isGoogleIdValid(id))
             throw new ServiceError(HTTP_STATUS.BAD_REQUEST, 'Invalid GoogleID');
 
         const result = await Prisma.client.users.findUnique({
@@ -173,30 +195,30 @@ class Users {
         let options = {
         };
 
-        if(page && perPage) {
-            if(perPage != -1) {
+        if (page && perPage) {
+            if (perPage != -1) {
                 (options as any).skip = (parseInt(page) - 1) * parseInt(perPage);
                 (options as any).take = parseInt(perPage);
             }
         }
 
-        if(role) {
+        if (role) {
             let merge;
-            
-            if(role === "admin")
+
+            if (role === "admin")
                 merge = { isAdmin: true };
-            else if(role === "student")
+            else if (role === "student")
                 merge = { isStudent: true };
-            else if(role === "teacher")
+            else if (role === "teacher")
                 merge = { isTeacher: true };
-            else if(role === "developer")
+            else if (role === "developer")
                 merge = { isDeveloper: true };
 
-            if(merge)
-                (options as any).where = {...(options as any).where, ...merge};
+            if (merge)
+                (options as any).where = { ...(options as any).where, ...merge };
         }
 
-        if(search) {
+        if (search) {
             const merge = {
                 OR: [
                     {
@@ -225,19 +247,19 @@ class Users {
                     },
                 ]
             };
-            (options as any).where = {...(options as any).where, ...merge};
+            (options as any).where = { ...(options as any).where, ...merge };
         }
 
-        if(status) {
+        if (status) {
             let merge;
-            
-            if(status === "active")
+
+            if (status === "active")
                 merge = { isSuspended: false };
-            else if(status === "suspended")
+            else if (status === "suspended")
                 merge = { isSuspended: true };
 
-            if(merge)
-                (options as any).where = {...(options as any).where, ...merge};
+            if (merge)
+                (options as any).where = { ...(options as any).where, ...merge };
         }
 
         const result = await Prisma.client.users.findMany(options);
@@ -247,7 +269,7 @@ class Users {
 
     public static async exists(id: string) {
 
-        if(!this.isGoogleIdValid(id))
+        if (!this.isGoogleIdValid(id))
             throw new ServiceError(HTTP_STATUS.BAD_REQUEST, 'Invalid GoogleID');
 
         const result = await Prisma.client.users.findUnique({
@@ -255,10 +277,10 @@ class Users {
                 id: id
             },
         });
-    
+
         if (result == null)
             return false;
-        
+
         return true;
 
     }
@@ -272,7 +294,7 @@ class Users {
 
     public static async isAdmin(id: string) {
 
-        if(!this.isGoogleIdValid(id))
+        if (!this.isGoogleIdValid(id))
             throw new ServiceError(HTTP_STATUS.BAD_REQUEST, 'Invalid GoogleID');
 
         let user = await this.getUser(id);
@@ -292,14 +314,14 @@ class Users {
 
     public static async isSuspended(id: string) {
 
-        if(!this.isGoogleIdValid(id))
+        if (!this.isGoogleIdValid(id))
             throw new ServiceError(HTTP_STATUS.BAD_REQUEST, 'Invalid GoogleID');
 
         let user = await this.getUser(id);
 
         return user.isSuspended;
     }
-    
+
 }
 
 export default Users;
