@@ -14,6 +14,7 @@ import Meetings from '../../controllers/API/v1/Classroom/Meetings';
 //import CourseWorks from '../../controllers/API/v1/Classrooms/CourseWorks';
 import AdminUsers from '../../controllers/API/v1/Admin/Users';
 // import AdminSessions from '../../controllers/API/v1/Admin/Sessions';
+import DebugLogs from '../../controllers/API/v1/Developer/Logs';
 import Users from '../../middlewares/Users';
 import Chat from '../../controllers/API/v1/Classroom/Chat';
 
@@ -36,6 +37,9 @@ router.get('/users/:id/profile', RateLimit.defaultAPI, Sessions.isAuthenticated,
 
 router.get('/admin/users', RateLimit.defaultAPI, Sessions.isAuthenticated, Users.isAdmin, AdminUsers.perform);
 // router.get('/admin/sessions', RateLimit.defaultAPI, Sessions.isAuthenticated, Users.isAdmin, AdminSessions.perform);
+
+
+router.get('/developer/logs', RateLimit.defaultAPI, Sessions.isAuthenticated, Users.isDeveloper, DebugLogs.perform);
 
 router.get('/classroom/classes', RateLimit.defaultAPI, Sessions.isAuthenticated, Classes.perform);
 router.get('/classroom/assignments', RateLimit.defaultAPI, Sessions.isAuthenticated, Assignments.perform);
