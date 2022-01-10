@@ -171,6 +171,7 @@ class Classrooms {
                         for (let courses of courses_assigments.data.courseWork) {
                             idToData[courses.id] = {
                                 title: courses.title,
+                                description: courses.description,
                                 late: isLate(courses)
                             };
                         }
@@ -188,6 +189,7 @@ class Classrooms {
                             for (let cw of res.data.studentSubmissions) {
                                 cw.title = idToData[cw.courseWorkId].title;
                                 cw.late = idToData[cw.courseWorkId].late;
+                                cw.description = idToData[cw.courseWorkId].description;
                                 data.push(cw);
                             }
                         }
