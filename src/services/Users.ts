@@ -60,6 +60,7 @@ class Users {
             student_class_number = parseInt(studentNumber)
         }
 
+        const isStudent = Boolean(student_id)
         const result = await Prisma.client.users.create({
             data: {
                 id: id,
@@ -71,9 +72,11 @@ class Users {
                 student_class_number,
                 student_id,
                 picture_url: picture_url,
+                isStudent,
+                isTeacher: !isStudent
             },
         });
-
+        
         if (result == null)
             throw new DatabaseError("User creation failed, result is null");
 
@@ -140,6 +143,7 @@ class Users {
                 grade_room = grade.substring(1)
                 student_class_number = parseInt(studentNumber)
             }
+            const isStudent = Boolean(student_id)
 
             if (
                 user.given_name !== profile.data.given_name ||
@@ -164,19 +168,10 @@ class Users {
                         student_class_number,
                         student_id,
                         picture_url: profile.data.picture,
+                        isStudent,
+                        isTeacher: !isStudent
                     }
                 });
-
-                if (!(grade_level && grade_room))
-                    await Prisma.client.users.update({
-                        where: {
-                            id: user.id
-                        },
-                        data: {
-                            isStudent: false,
-                            isTeacher: true
-                        }
-                    })
 
                 if (result == null)
                     throw new DatabaseError("User update failed, result is null");

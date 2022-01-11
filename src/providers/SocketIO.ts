@@ -70,24 +70,31 @@ class SocketIO {
             Logger.log("debug", `User ${user.given_name} ${user.family_name} connected with socketId "${socket.id}"`)
             // socket.send("You connected")
 
-            const { grade_level, grade_room } = user
             // Check if user is a student or a teacher and join rooms accordingly
-            if (!(grade_level && grade_room)) {
+            if (!user.isStudent && user.isTeacher) {
                 // Is not a student
                 Logger.log("debug", "Is not a student")
+                socket.join(["/", "teachers"])
+                socket.emit("new-room", { user, rooms: ["teachers"] })
+
                 // TODO : Make chat room logic for teachers
-            } else {
+            } else if (user.isStudent && !user.isTeacher) {
                 // Is a student
-                const socketRoom = grade_level + "/" + grade_room
-                socket.join(["/", "students", socketRoom])
-                setTimeout(() => {
+                const { grade_level, grade_room } = user
+                if (!(grade_level && grade_room)) {
+                    console.log("User does not have grade_level and/or grade_room")
+
+                    socket.join(["/", "students"])
+                    socket.emit("new-room", { user, rooms: ["students"] })
+                }
+                else {
+                    const socketRoom = grade_level + "/" + grade_room
+                    socket.join(["/", "students", socketRoom])
                     socket.emit("new-room", { user, rooms: ["students", socketRoom] })
-                }, 700)
 
-                console.log("socket is in namespace", socket.nsp.name)
-
-                console.log("emitted")
-            }
+                    console.log("socket is in namespace", socket.nsp.name)
+                }
+            } else console.log("Unknown if user is a teacher or student")
 
             socket.on("message", (data) => {
                 Logger.log("debug", `${user.given_name} ${user.family_name} said "${data.msg}" ${data.room ? `in room ${data.room}` : "in main room"}`)
