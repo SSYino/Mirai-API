@@ -106,7 +106,7 @@ class Users {
 
         profile = await oauth2.userinfo.get();
 
-        let doesExist = await Users.exists(profile.data.id);        
+        let doesExist = await Users.exists(profile.data.id);
         let gmail = await GoogleAPI.google.gmail('v1').users.getProfile({
             userId: profile.data.id,
             auth: oAuth2Client,
@@ -123,11 +123,33 @@ class Users {
                 throw new ServiceError(HTTP_STATUS.FORBIDDEN, 'Your GoogleID has been changed! Please contact the developer');
             }
 
+            const studentIdRegex = /^\d+/
+            const userDataRegex = /^(\d+)\.(\d+)\s/
+            const match1 = gmail.data.emailAddress.match(studentIdRegex)
+            const match2 = profile.data.given_name.match(userDataRegex)
+
+            let student_id
+            let grade_level
+            let grade_room
+            let student_class_number
+
+            if (match1) student_id = match1[0]
+            if (match2) {
+                const [_, grade, studentNumber] = match2
+                grade_level = grade.substring(0, 1)
+                grade_room = grade.substring(1)
+                student_class_number = parseInt(studentNumber)
+            }
+
             if (
                 user.given_name !== profile.data.given_name ||
                 user.family_name !== profile.data.family_name ||
                 user.email !== gmail.data.emailAddress ||
-                user.picture_url !== profile.data.picture) {
+                user.picture_url !== profile.data.picture ||
+                user.grade_level !== grade_level ||
+                user.grade_room !== grade_room ||
+                user.student_class_number !== student_class_number ||
+                user.student_id !== student_id) {
 
                 const result = await Prisma.client.users.update({
                     where: {
@@ -137,6 +159,10 @@ class Users {
                         given_name: profile.data.given_name,
                         family_name: profile.data.family_name,
                         email: gmail.data.emailAddress,
+                        grade_level,
+                        grade_room,
+                        student_class_number,
+                        student_id,
                         picture_url: profile.data.picture,
                     }
                 });
@@ -304,7 +330,7 @@ class Users {
 
     public static async isDeveloper(id: string) {
 
-        if(!this.isGoogleIdValid(id))
+        if (!this.isGoogleIdValid(id))
             throw new ServiceError(HTTP_STATUS.BAD_REQUEST, 'Invalid GoogleID');
 
         let user = await this.getUser(id);
