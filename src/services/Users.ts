@@ -128,10 +128,10 @@ class Users {
             const match1 = gmail.data.emailAddress.match(studentIdRegex)
             const match2 = profile.data.given_name.match(userDataRegex)
 
-            let student_id
-            let grade_level
-            let grade_room
-            let student_class_number
+            let student_id = null
+            let grade_level = null
+            let grade_room = null
+            let student_class_number = null
 
             if (match1) student_id = match1[0]
             if (match2) {
@@ -166,6 +166,17 @@ class Users {
                         picture_url: profile.data.picture,
                     }
                 });
+
+                if (!(grade_level && grade_room))
+                    await Prisma.client.users.update({
+                        where: {
+                            id: user.id
+                        },
+                        data: {
+                            isStudent: false,
+                            isTeacher: true
+                        }
+                    })
 
                 if (result == null)
                     throw new DatabaseError("User update failed, result is null");
