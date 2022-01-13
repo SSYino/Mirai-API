@@ -98,15 +98,12 @@ class SocketIO {
 
             socket.on("message", (data) => {
                 Logger.log("debug", `${user.given_name} ${user.family_name} said "${data.msg}" ${data.room ? `in room ${data.room}` : "in main room"}`)
-                // Logger.log("debug", socket.rooms)
 
                 if (data.room) {
-                    if (!socket.rooms.has(data.room)) {
-                        socket.join(data.room)
-                        socket.emit("new-room", { user, rooms: [data.room] })
-                    }
+                    if (!socket.rooms.has(data.room)) socket.emit("new-room", { user, rooms: [data.room] })
 
-                    everyone.in(data.room).emit("message", { msg: data.msg, user, room: data.room }) // Remove room prop later
+                    const isDM = /^DM@.+;.+$/.test(data.room)
+                    everyone.in(data.room).emit("message", { msg: data.msg, user, socketId: socket.id, room: data.room, isDM }) // Remove room prop later
                 }
                 else {
                     everyone.in("/").emit("message", { msg: data.msg, user, room: "/" }) // Remove room prop later
@@ -114,6 +111,13 @@ class SocketIO {
             })
 
             socket.on("getUserData", () => socket.emit("userData", { user }))
+            socket.on("createDM", (data) => {
+                const { receiver } = data
+                const dmRoomName = `DM@${socket.userId};${receiver.userId}`
+
+                everyone.in([socket.id, receiver.socketId]).socketsJoin(dmRoomName)
+                socket.emit("new-room", { user, rooms: [dmRoomName] })
+            })
 
             socket.on("disconnect", () => {
                 Logger.log("debug", `User ${user.given_name} ${user.family_name} DISCONNECTED with socketId "${socket.id}"`)
