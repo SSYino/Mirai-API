@@ -7,7 +7,7 @@ datasource db {
 }
 
 model Users {
-  id                   String     @id
+  id                   String      @id
   given_name           String
   family_name          String
   email                String
@@ -17,16 +17,17 @@ model Users {
   student_id           String?
   picture_url          String
   sessions             Sessions[]
+  chatRooms            ChatRooms[]
   classes              Json?
   assignments          Json?
   Calendars            Calendar[]
-  isAdmin              Boolean    @default(false)
-  isDeveloper          Boolean    @default(false)
-  isTeacher            Boolean    @default(false)
-  isStudent            Boolean    @default(true)
-  isSuspended          Boolean    @default(false)
-  createdAt            DateTime   @default(now()) @db.Timestamptz
-  updatedAt            DateTime   @updatedAt @db.Timestamptz
+  isAdmin              Boolean     @default(false)
+  isDeveloper          Boolean     @default(false)
+  isTeacher            Boolean     @default(false)
+  isStudent            Boolean     @default(true)
+  isSuspended          Boolean     @default(false)
+  createdAt            DateTime    @default(now()) @db.Timestamptz
+  updatedAt            DateTime    @updatedAt @db.Timestamptz
 }
 
 model Sessions {
@@ -38,6 +39,16 @@ model Sessions {
   userId            String
   revoked           Boolean  @default(false)
   createdAt         DateTime @default(now()) @db.Timestamptz
+}
+
+model ChatRooms {
+  id              String  @id
+  name            String?
+  Users           Users[]
+  members         Json    @db.Json
+  isDM            Boolean
+  isGroup         Boolean
+  isMadeByTeacher Boolean
 }
 
 model Classes {
