@@ -48,8 +48,8 @@ class Users {
         const match2 = given_name.match(userDataRegex)
 
         let student_id
-        let grade_level
-        let grade_room
+        let grade_level: string | undefined
+        let grade_room: string | undefined
         let student_class_number
 
         if (match1) student_id = match1[0]
@@ -76,7 +76,84 @@ class Users {
                 isTeacher: !isStudent
             },
         });
-        
+
+        // Create the four default chat rooms (if they don't already exist)
+        const defaultChatRooms = ["main", "students", "teachers", "class"];
+        const ChatRoomNames: any = {
+            main: "Main Chat",
+            students: "Students",
+            teachers: "Teachers",
+            class: "Class Chat"
+        }
+
+        const defaultChatRoomsMembers = await Prisma.client.chatRooms.findMany({
+            where: {
+                OR: defaultChatRooms.map(roomId => ({ id: roomId }))
+            },
+            select: {
+                id: true,
+                members: true,
+                Users: true
+            }
+        })
+
+        let roomsInDB: string[] = [];
+        let roomsNotInDB: string[] = [];
+        let roomsUserNotIn: string[] = [];
+
+        defaultChatRoomsMembers.forEach(room => {
+            if (((room.id === "class") && isStudent && grade_level && grade_room) || ((room.id === "students") && isStudent) || (room.id === "teachers" && !isStudent) || (room.id === "main")) {
+                const userData = room.Users.find(user => user.id === id);
+                if (!userData) {
+                    roomsUserNotIn.push(room.id)
+                }
+            }
+
+            roomsInDB.push(room.id)
+        })
+
+        defaultChatRooms.forEach(roomId => {
+            if (!roomsInDB.includes(roomId)) roomsNotInDB.push(roomId)
+        })
+
+        roomsNotInDB.forEach(async roomId => await Prisma.client.chatRooms.create({
+            data: {
+                id: roomId,
+                name: ChatRoomNames[roomId],
+                isDM: false,
+                isGroup: true,
+                isMadeByTeacher: false,
+                members: (((roomId === "teachers") && isStudent) || (["students", "class"].includes(roomId) && !isStudent) || ((roomId === "class") && (!grade_level || !grade_room))) ? [] : [{
+                    name: `${given_name} ${family_name}`,
+                    userId: id
+                }],
+                Users: { connect: { id } }
+            }
+        }))
+
+        roomsUserNotIn.forEach(async roomId => {
+            const roomData = defaultChatRoomsMembers.find(room => room.id === roomId);
+            if (!roomData) return;
+            const oldMembers = roomData.members
+            const oldUsers = roomData.Users
+            const userData = {
+                name: `${given_name} ${family_name}`,
+                userId: id
+            };
+            
+            const prismaData = {
+                members: oldMembers ? [...JSON.parse(JSON.stringify(oldMembers)), userData] : [userData],
+                Users: { connect: [...oldUsers.map(user => ({ id: user.id })), { id }] }
+            }
+
+            await Prisma.client.chatRooms.update({
+                where: {
+                    id: roomId,
+                },
+                data: prismaData
+            })
+        })
+
         if (result == null)
             throw new DatabaseError("User creation failed, result is null");
 
